@@ -38,7 +38,7 @@
         // Эта строка загрузит красивые фигуры из интернета:
         pieceTheme: 'https://chessboardjs.com/img/chesspieces/wikipedia/{piece}.png'
         };
-        var board = Chessboard('board', { draggable: true, position: 'start' });
+        var board = Chessboard('board', config);
 
         async function getAdvice() {
             const initialUI = document.getElementById('initial-ui');
