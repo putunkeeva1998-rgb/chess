@@ -39,42 +39,53 @@
 };
 var board = Chessboard('board', config);
 
-        async function getAdvice() {
-    list.innerHTML = '<div class="loader">Тренер изучает позицию...</div>';
+// СВЯЗЫВАЕМ КОД С HTML ЭЛЕМЕНТАМИ
+const list = document.getElementById('advice-list');
+const initialUI = document.getElementById('initial-ui');
+const loader = document.getElementById('loader');
+
+async function getAdvice() {
+    // Скрываем кнопку и показываем лоадер
+    initialUI.style.display = 'none';
+    loader.style.display = 'block';
+    list.innerHTML = ''; 
     
-    // Создаем контроллер, который позволит ждать дольше
     const controller = new AbortController();
-    const timeoutId = setTimeout(() => controller.abort(), 45000); // Ждем 45 секунд
+    const timeoutId = setTimeout(() => controller.abort(), 45000); 
 
     try {
         const response = await fetch('http://127.0.0.1:8000/analyze', {
             method: 'POST',
             headers: { 'Content-Type': 'application/json' },
-            body: JSON.stringify({ fen: board.fen() }),
-            signal: controller.signal // Привязываем сигнал ожидания
+            body: JSON.stringify({ fen: board.fen() }), // Передаем позицию с доски
+            signal: controller.signal 
         });
 
-        clearTimeout(timeoutId); // Отменяем таймер, если ответ пришел
+        clearTimeout(timeoutId); 
         const data = await response.json();
         
-        list.innerHTML = ''; // Убираем лоадер
+        loader.style.display = 'none'; // Убираем лоадер
 
         if (data.advice) {
+            // Разбиваем ответ на строки и красиво выводим
             const lines = data.advice.trim().split('\n');
             lines.forEach(line => {
-                const div = document.createElement('div');
-                div.className = 'advice-item';
-                div.innerHTML = line;
-                list.appendChild(div);
+                if(line.trim() !== "") { // Проверка на пустые строки
+                    const div = document.createElement('div');
+                    div.className = 'advice-item';
+                    div.innerHTML = line;
+                    list.appendChild(div);
+                }
             });
         } else {
-            list.innerHTML = '<div>Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
+            list.innerHTML = '<div style="color:red">Ошибка: ' + (data.error || 'Неизвестная ошибка') + '</div>';
         }
 
-        // Добавляем кнопку сброса
+        // Кнопка, чтобы вернуть всё назад
         const resetBtn = document.createElement('button');
         resetBtn.innerText = "Я сделал ход. Дальше!";
         resetBtn.style.marginTop = "15px";
+        resetBtn.style.background = "#3498db";
         resetBtn.onclick = () => { 
             initialUI.style.display = 'block'; 
             list.innerHTML = ''; 
@@ -82,11 +93,13 @@ var board = Chessboard('board', config);
         list.appendChild(resetBtn);
 
     } catch (error) {
+        loader.style.display = 'none';
         if (error.name === 'AbortError') {
             list.innerHTML = '<div>Сервер думал слишком долго. Попробуйте еще раз!</div>';
         } else {
-            list.innerHTML = '<div>Ошибка связи. Проверь, запущен ли PyCharm!</div>';
+            list.innerHTML = '<div>Ошибка связи. Проверь, запущен ли Python в PyCharm!</div>';
         }
+        initialUI.style.display = 'block';
     }
 }
     </script>
